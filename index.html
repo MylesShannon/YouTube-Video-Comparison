@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>YouTube Video Comparison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" media="screen" href="main.css" />
+    <script
+        src="https://code.jquery.com/jquery-3.3.1.min.js"
+        integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script>
+        let tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        let firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        let players = [];
+        let videos = getParams('v');
+        let action = getParams('l')[0];
+
+        function getParams(param) {
+            let params = [];
+            let paramsWithId = decodeURIComponent(window.location.search.substring(1)).split('&');
+            for(let i = 0; i < paramsWithId.length; i++) {
+                paramsValue = paramsWithId[i].split('=');
+                if(paramsValue[0].substring(0, 1) == param) {
+                    params.push(paramsValue[1]);
+                }
+            }
+            return params;
+        }
+
+        function onYouTubeIframeAPIReady() {
+            for(let i = 0; i < videos.length; i++) {
+                let newPlayer = document.createElement('div');
+                newPlayer.setAttribute('id', 'player-'+i);
+                document.getElementById('players').appendChild(newPlayer);
+                players[i] = new YT.Player('player-'+i, {
+                    height: '390',
+                    width: '640',
+                    videoId: videos[i],
+                    playerVars: { 'autoplay': 0, 'controls': 0 },
+                });
+            }
+            setLayout();
+        }
+
+        function setLayout() {
+            if(videos.length == 2) {
+                // this is a side-by-side comparison of two videos
+            } else {
+                // this is a gallery of videos
+                $('#controls').hide();
+
+                // hide all videos but first
+                for(let i = 1; i < players.length; i++) {
+                    document.getElementById('player-'+i).style.display = 'none';
+                }
+
+                // create tabs
+                for(let i = 0; i < players.length; i++) {
+                    let newTab = document.createElement('div');
+                    newTab.setAttribute('id', 'player-tab-'+i);
+                    if(i == 0) {
+                        newTab.setAttribute('class', 'tab active');
+                    } else {
+                        newTab.setAttribute('class', 'tab');
+                    }
+                    newTab.innerText = "Video " + (i+1);
+                    $(newTab).click(function(e) {
+                        //hide all other players & set current tab as active
+                        for(let p = 0; p < players.length; p++) {
+                            if($(e.target).html().slice(-1) - 1 == p ) {
+                                $('#player-'+p).show();
+                                $('#player-tab-'+p).addClass('active');
+                            } else {
+                                $('#player-'+p).hide();
+                                $('#player-tab-'+p).removeClass('active');
+                            }
+                        }
+                    })
+                    document.getElementById('tabs').appendChild(newTab);
+                }
+            }
+        }
+
+        function stopVideo(player) {
+            player.stopVideo();
+        }
+
+        function playAll() {
+            players.forEach(function(value, index, array) {
+                value.playVideo();
+            });
+            return;
+        }
+
+        function pauseAll() {
+            players.forEach(function(value, index, array) {
+                value.pauseVideo();
+            });
+            return;
+        }
+    </script>
+</head>
+<body>
+    <div id="tabs"></div>
+    <div id="players"></div>
+    <div id="controls">
+        <button id="play-both" onclick="playAll()">Play Both</button>
+        <button id="pause-both" onclick="pauseAll()">Pause Both</button>
+    </div>
+</body>
+</html>
